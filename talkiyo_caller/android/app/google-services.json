@@ -1,0 +1,234 @@
+{
+  "project_info": {
+    "project_number": "474432299061",
+    "project_id": "fir-auth-f82fd",
+    "storage_bucket": "fir-auth-f82fd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474432299061:android:7a18ed1f047e625366117c",
+        "android_client_info": {
+          "package_name": "com.comvivamds.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoxMiQLeP5Ju1u2Dvsg1pkXDcwjuEnOoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474432299061-27kpaoa41cd4sqtorllralgprhum2mkp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.comvivamds.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474432299061:android:01595bc2a991287866117c",
+        "android_client_info": {
+          "package_name": "com.example.firebaseauthapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474432299061-gbsn4r4m6lgshoag4pe0gri2h9qsilom.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.firebaseauthapp",
+            "certificate_hash": "35273550ee2a0452bd8b5b7198d0247634722097"
+          }
+        },
+        {
+          "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoxMiQLeP5Ju1u2Dvsg1pkXDcwjuEnOoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474432299061-27kpaoa41cd4sqtorllralgprhum2mkp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.comvivamds.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474432299061:android:fc65cfa8f871f45666117c",
+        "android_client_info": {
+          "package_name": "com.example.talkiyo_caller"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoxMiQLeP5Ju1u2Dvsg1pkXDcwjuEnOoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474432299061-27kpaoa41cd4sqtorllralgprhum2mkp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.comvivamds.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474432299061:android:0877b9e316638a5366117c",
+        "android_client_info": {
+          "package_name": "com.example.talkiyo_reciever"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoxMiQLeP5Ju1u2Dvsg1pkXDcwjuEnOoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474432299061-27kpaoa41cd4sqtorllralgprhum2mkp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.comvivamds.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474432299061:android:3799e3282784c08f66117c",
+        "android_client_info": {
+          "package_name": "com.petercr.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoxMiQLeP5Ju1u2Dvsg1pkXDcwjuEnOoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474432299061-27kpaoa41cd4sqtorllralgprhum2mkp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.comvivamds.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474432299061:android:e435403bbadcd95a66117c",
+        "android_client_info": {
+          "package_name": "com.pushset.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoxMiQLeP5Ju1u2Dvsg1pkXDcwjuEnOoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474432299061-ie8oobbrf6a5b0m83ia2mies085larnk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474432299061-27kpaoa41cd4sqtorllralgprhum2mkp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.comvivamds.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

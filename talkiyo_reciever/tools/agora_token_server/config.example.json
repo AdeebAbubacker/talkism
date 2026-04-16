@@ -1,0 +1,8 @@
+{
+  "appId": "3fe512d0a3da45e68d5e16972a82733c",
+  "activeCertificate": "primary",
+  "primaryCertificate": "YOUR_PRIMARY_CERTIFICATE",
+  "secondaryCertificate": "YOUR_SECONDARY_CERTIFICATE",
+  "port": 8080,
+  "tokenTtlSeconds": 3600
+}
