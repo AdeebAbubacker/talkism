@@ -13,12 +13,12 @@ class ActiveCallScreen extends StatefulWidget {
   final bool isInitiator;
 
   const ActiveCallScreen({
-    super.key,
+    Key? key,
     required this.call,
     required this.agoraService,
     required this.firestoreService,
     required this.isInitiator,
-  });
+  }) : super(key: key);
 
   @override
   State<ActiveCallScreen> createState() => _ActiveCallScreenState();
@@ -65,16 +65,12 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
             debugPrint('Remote user joined: $remoteUid');
             setState(() => _remoteUserId = remoteUid);
           },
-          onUserOffline:
-              (
-                RtcConnection connection,
-                int remoteUid,
-                UserOfflineReasonType reason,
-              ) {
-                debugPrint('Remote user offline: $remoteUid');
-                setState(() => _remoteUserId = null);
-                _endCall();
-              },
+          onUserOffline: (RtcConnection connection, int remoteUid,
+              UserOfflineReasonType reason) {
+            debugPrint('Remote user offline: $remoteUid');
+            setState(() => _remoteUserId = null);
+            _endCall();
+          },
           onError: (ErrorCodeType errorCode, String errorMsg) {
             debugPrint('Agora error: $errorCode - $errorMsg');
           },
@@ -118,9 +114,9 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     } catch (e) {
       debugPrint('Error joining channel: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
       }
     }
   }
@@ -247,7 +243,11 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.videocam_off, size: 64, color: Colors.white30),
+                  Icon(
+                    Icons.videocam_off,
+                    size: 64,
+                    color: Colors.white30,
+                  ),
                   SizedBox(height: 16),
                   Text(
                     'Waiting for user to join...',
@@ -388,11 +388,11 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                   child: Text(
                     widget.isInitiator
                         ? widget.call.receiverName.isNotEmpty
-                              ? widget.call.receiverName[0].toUpperCase()
-                              : 'U'
+                            ? widget.call.receiverName[0].toUpperCase()
+                            : 'U'
                         : widget.call.callerName.isNotEmpty
-                        ? widget.call.callerName[0].toUpperCase()
-                        : 'U',
+                            ? widget.call.callerName[0].toUpperCase()
+                            : 'U',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 48,
@@ -414,7 +414,10 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _formatDuration(_callDurationSeconds),
-                  style: const TextStyle(color: Colors.white70, fontSize: 18),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),

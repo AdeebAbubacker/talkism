@@ -1,29 +1,37 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import 'app.dart';
-import 'core/services/installation_service.dart';
-import 'core/services/notification_service.dart';
+import 'package:flutter/material.dart';
 import 'firebase_options.dart';
+import 'screens/auth/splash_screen.dart';
+import 'screens/home/users_screen.dart';
+import 'screens/auth/login_screen.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  final preferences = await SharedPreferences.getInstance();
-  final notificationService = NotificationService(
-    messaging: FirebaseMessaging.instance,
-    localNotifications: FlutterLocalNotificationsPlugin(),
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(
-    CallerApp(
-      notificationService: notificationService,
-      installationService: InstallationService(preferences: preferences),
-    ),
-  );
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Agora Calling',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const SplashScreen(),
+      routes: {
+        '/home': (context) => const UsersScreen(),
+        '/login': (context) => const LoginScreen(),
+      },
+    );
+  }
 }
