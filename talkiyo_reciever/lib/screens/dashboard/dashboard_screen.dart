@@ -20,7 +20,8 @@ class UsedddddrsScreen extends StatefulWidget {
   State<UsedddddrsScreen> createState() => _UsedddddrsScreenState();
 }
 
-class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
+class _UsedddddrsScreenState extends State<UsedddddrsScreen>
+    with WidgetsBindingObserver {
   final _authService = AuthService();
   final _firestoreService = FirestoreService();
   final _agoraService = AgoraService();
@@ -29,6 +30,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
   UserModel? _currentUserData;
   StreamSubscription<CallModel?>? _incomingCallSub;
   StreamSubscription<String>? _notificationTapSub;
+  Timer? _presenceTimer;
 
   bool _isShowingIncomingCall = false;
   int selectedIndex = 0;
@@ -44,11 +46,63 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentUserId = _authService.currentUserId ?? '';
     _loadCurrentUserData();
     _initializeAgora();
     _listenForIncomingCalls();
     _initializeNotifications();
+    _startPresenceHeartbeat();
+  }
+
+  void _startPresenceHeartbeat() {
+    if (_currentUserId.isEmpty) return;
+
+    _presenceTimer?.cancel();
+    unawaited(_setCurrentUserPresence(true));
+    _presenceTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(_setCurrentUserPresence(true, updateLocal: false));
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _setCurrentUserPresence(
+    bool isOnline, {
+    bool updateLocal = true,
+  }) async {
+    if (_currentUserId.isEmpty) return;
+
+    try {
+      await _authService.updateUserStatus(
+        uid: _currentUserId,
+        isOnline: isOnline,
+      );
+    } catch (e) {
+      debugPrint('Failed to update presence: $e');
+    }
+
+    if (!updateLocal || !mounted) return;
+
+    final currentUserData = _currentUserData;
+    if (currentUserData == null) return;
+
+    setState(() {
+      _currentUserData = currentUserData.copyWith(
+        isOnline: isOnline,
+        updatedAt: DateTime.now(),
+      );
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startPresenceHeartbeat();
+      return;
+    }
+
+    _presenceTimer?.cancel();
+    unawaited(_setCurrentUserPresence(false, updateLocal: false));
   }
 
   Future<void> _initializeNotifications() async {
@@ -288,7 +342,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            _AvailabilityCard(isOnline: _currentUserData?.isOnline ?? true),
+            _AvailabilityCard(isOnline: _currentUserData?.isOnlineNow ?? false),
             const SizedBox(height: 16),
             if (incomingCall == null)
               const _NoIncomingCallCard()
@@ -398,9 +452,9 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
     return Positioned(
       left: 16,
       right: 16,
-      bottom: 20,
+      bottom: 45,
       child: Container(
-        height: 84,
+        height: 70,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -480,6 +534,9 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _presenceTimer?.cancel();
+    unawaited(_setCurrentUserPresence(false, updateLocal: false));
     _incomingCallSub?.cancel();
     _notificationTapSub?.cancel();
     _agoraService.dispose();

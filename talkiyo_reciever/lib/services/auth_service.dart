@@ -96,6 +96,7 @@ class AuthService {
         await _runBestEffortFirestoreWrite(
           () => _firestore.collection('users').doc(currentUserId).set({
             'isOnline': false,
+            'lastSeen': DateTime.now(),
             'updatedAt': DateTime.now(),
           }, SetOptions(merge: true)),
           context: 'mark user offline',
@@ -140,6 +141,7 @@ class AuthService {
       await _firestore.collection('users').doc(uid).set({
         'isOnline': isOnline,
         'lastSeen': DateTime.now(),
+        'updatedAt': DateTime.now(),
       }, SetOptions(merge: true));
     } catch (e) {
       throw 'Failed to update user status: $e';

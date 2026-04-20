@@ -52,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 24),
             // App name
             const Text(
-              'Agora Call',
+              'Talkiyo Call',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

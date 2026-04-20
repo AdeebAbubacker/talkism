@@ -25,7 +25,8 @@ class UsedddddrsScreen extends StatefulWidget {
   State<UsedddddrsScreen> createState() => _UsedddddrsScreenState();
 }
 
-class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
+class _UsedddddrsScreenState extends State<UsedddddrsScreen>
+    with WidgetsBindingObserver {
   final _authService = AuthService();
   final _firestoreService = FirestoreService();
   final _agoraService = AgoraService();
@@ -34,6 +35,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
   UserModel? _currentUserData;
   StreamSubscription<CallModel?>? _incomingCallSub;
   StreamSubscription<String>? _notificationTapSub;
+  Timer? _presenceTimer;
 
   bool _isShowingIncomingCall = false;
   int selectedIndex = 0;
@@ -49,11 +51,63 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentUserId = _authService.currentUserId ?? '';
     _loadCurrentUserData();
     _initializeAgora();
     _listenForIncomingCalls();
     _initializeNotifications();
+    _startPresenceHeartbeat();
+  }
+
+  void _startPresenceHeartbeat() {
+    if (_currentUserId.isEmpty) return;
+
+    _presenceTimer?.cancel();
+    unawaited(_setCurrentUserPresence(true));
+    _presenceTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(_setCurrentUserPresence(true, updateLocal: false));
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _setCurrentUserPresence(
+    bool isOnline, {
+    bool updateLocal = true,
+  }) async {
+    if (_currentUserId.isEmpty) return;
+
+    try {
+      await _authService.updateUserStatus(
+        uid: _currentUserId,
+        isOnline: isOnline,
+      );
+    } catch (e) {
+      debugPrint('Failed to update presence: $e');
+    }
+
+    if (!updateLocal || !mounted) return;
+
+    final currentUserData = _currentUserData;
+    if (currentUserData == null) return;
+
+    setState(() {
+      _currentUserData = currentUserData.copyWith(
+        isOnline: isOnline,
+        updatedAt: DateTime.now(),
+      );
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startPresenceHeartbeat();
+      return;
+    }
+
+    _presenceTimer?.cancel();
+    unawaited(_setCurrentUserPresence(false, updateLocal: false));
   }
 
   Future<void> _initializeNotifications() async {
@@ -401,6 +455,8 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
   }
 
   Widget _listenerCard(UserModel user) {
+    final isOnlineNow = user.isOnlineNow;
+
     // final imageUrl = (user.imageUrl != null && user.imageUrl!.trim().isNotEmpty)
     //     ? user.imageUrl!.trim()
     //     : null;
@@ -424,8 +480,8 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
           Stack(
             children: [
               Container(
-                width: 92,
-                height: 110,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: const Color(0xFFD8B4F8),
@@ -450,7 +506,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: user.isOnline ? Colors.green : Colors.grey,
+                    color: isOnlineNow ? Colors.green : Colors.grey,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                   ),
@@ -470,7 +526,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -479,7 +535,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
                     children: [
                       const Text(
                         'User',
-                        style: TextStyle(fontSize: 17, color: Colors.black),
+                        style: TextStyle(fontSize: 11, color: Colors.black),
                       ),
                       const SizedBox(width: 12),
                       Container(width: 1, height: 18, color: Colors.grey[300]),
@@ -491,10 +547,10 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        user.isOnline ? '2/Sec' : 'Offline',
+                        isOnlineNow ? '2/Sec' : 'Offline',
                         style: TextStyle(
-                          fontSize: 16,
-                          color: user.isOnline
+                          fontSize: 14,
+                          color: isOnlineNow
                               ? const Color(0xFFDA9E16)
                               : Colors.grey,
                           fontWeight: FontWeight.w600,
@@ -517,7 +573,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: 9,
                             color: Colors.grey,
                             fontWeight: FontWeight.w500,
                           ),
@@ -745,6 +801,9 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _presenceTimer?.cancel();
+    unawaited(_setCurrentUserPresence(false, updateLocal: false));
     _incomingCallSub?.cancel();
     _notificationTapSub?.cancel();
     _agoraService.dispose();

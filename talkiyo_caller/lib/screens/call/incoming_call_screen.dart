@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
@@ -23,7 +25,41 @@ class IncomingCallScreen extends StatefulWidget {
 }
 
 class _IncomingCallScreenState extends State<IncomingCallScreen> {
+  StreamSubscription<CallModel?>? _callStatusSub;
   bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenForRemoteCancellation();
+  }
+
+  void _listenForRemoteCancellation() {
+    _callStatusSub = widget.firestoreService
+        .streamCallStatus(widget.call.callId)
+        .listen(
+          (updatedCall) {
+            if (_isProcessing || !mounted) return;
+
+            final shouldDismiss =
+                updatedCall == null ||
+                updatedCall.status == CallStatus.rejected ||
+                updatedCall.status == CallStatus.ended ||
+                updatedCall.status == CallStatus.missed;
+
+            if (shouldDismiss) {
+              _isProcessing = true;
+              unawaited(
+                NotificationService.cancelCallNotification(widget.call.callId),
+              );
+              Navigator.of(context).pop();
+            }
+          },
+          onError: (error) {
+            debugPrint('Error listening for incoming call status: $error');
+          },
+        );
+  }
 
   /// Accept the incoming call
   Future<void> _acceptCall() async {
@@ -249,5 +285,11 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _callStatusSub?.cancel();
+    super.dispose();
   }
 }

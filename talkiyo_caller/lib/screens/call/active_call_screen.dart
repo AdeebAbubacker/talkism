@@ -52,7 +52,12 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         .streamCallStatus(widget.call.callId)
         .listen(
           (updatedCall) {
-            if (updatedCall == null || _isEndingCall) return;
+            if (_isEndingCall) return;
+
+            if (updatedCall == null) {
+              unawaited(_finishCall(updateFirestoreStatus: false));
+              return;
+            }
 
             final isTerminal =
                 updatedCall.status == CallStatus.ended ||
@@ -60,7 +65,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                 updatedCall.status == CallStatus.missed;
 
             if (isTerminal) {
-              _finishCall(updateFirestoreStatus: false);
+              unawaited(_finishCall(updateFirestoreStatus: false));
             }
           },
           onError: (error) {
@@ -241,25 +246,40 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _isEndingCall = true;
     if (mounted) setState(() {});
 
-    try {
-      if (updateFirestoreStatus) {
-        try {
-          await widget.firestoreService.updateCallStatus(
-            widget.call.callId,
-            CallStatus.ended,
-          );
-        } catch (e) {
-          debugPrint('Error updating call status while ending call: $e');
-        }
-      }
+    final cleanupTasks = <Future<void>>[
+      _cancelCallNotificationBestEffort(),
+      _leaveAndReleaseEngine(),
+    ];
 
-      await NotificationService.cancelCallNotification(widget.call.callId);
-      await _leaveAndReleaseEngine();
-    } catch (e) {
-      debugPrint('Error ending call: $e');
+    if (updateFirestoreStatus) {
+      cleanupTasks.add(_markCallEndedBestEffort());
     }
 
+    await Future.wait(
+      cleanupTasks,
+    ).timeout(const Duration(seconds: 3), onTimeout: () => <void>[]);
+
     if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _markCallEndedBestEffort() async {
+    try {
+      await widget.firestoreService
+          .updateCallStatus(widget.call.callId, CallStatus.ended)
+          .timeout(const Duration(seconds: 2));
+    } catch (e) {
+      debugPrint('Error updating call status while ending call: $e');
+    }
+  }
+
+  Future<void> _cancelCallNotificationBestEffort() async {
+    try {
+      await NotificationService.cancelCallNotification(
+        widget.call.callId,
+      ).timeout(const Duration(seconds: 1));
+    } catch (e) {
+      debugPrint('Error cancelling call notification: $e');
+    }
   }
 
   Future<void> _leaveAndReleaseEngine() async {
@@ -271,13 +291,13 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _engine = null;
 
     try {
-      await engine.leaveChannel();
+      await engine.leaveChannel().timeout(const Duration(seconds: 2));
     } catch (e) {
       debugPrint('Error leaving Agora channel: $e');
     }
 
     try {
-      await engine.release();
+      await engine.release().timeout(const Duration(seconds: 2));
     } catch (e) {
       debugPrint('Error releasing Agora engine: $e');
     }

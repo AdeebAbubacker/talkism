@@ -11,11 +11,11 @@ class OutgoingCallScreen extends StatefulWidget {
   final FirestoreService firestoreService;
 
   const OutgoingCallScreen({
-    Key? key,
+    super.key,
     required this.call,
     required this.agoraService,
     required this.firestoreService,
-  }) : super(key: key);
+  });
 
   @override
   State<OutgoingCallScreen> createState() => _OutgoingCallScreenState();
@@ -23,6 +23,8 @@ class OutgoingCallScreen extends StatefulWidget {
 
 class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
   late Stream<CallModel?> _callStatusStream;
+  bool _hasHandledTerminalState = false;
+  bool _isCancelling = false;
 
   @override
   void initState() {
@@ -34,6 +36,9 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
 
   /// Cancel the outgoing call
   Future<void> _cancelCall() async {
+    if (_isCancelling || _hasHandledTerminalState) return;
+
+    _isCancelling = true;
     try {
       await widget.firestoreService.updateCallStatus(
         widget.call.callId,
@@ -44,6 +49,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
       }
     } catch (e) {
       if (mounted) {
+        _isCancelling = false;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -67,9 +73,13 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
               final updatedCall = snapshot.data!;
 
               // If call was accepted, navigate to active call screen
-              if (updatedCall.status == CallStatus.accepted) {
+              if (updatedCall.status == CallStatus.accepted &&
+                  !_hasHandledTerminalState) {
+                _hasHandledTerminalState = true;
+                final navigator = Navigator.of(context);
                 Future.microtask(() {
-                  Navigator.of(context).pushReplacement(
+                  if (!mounted) return;
+                  navigator.pushReplacement(
                     MaterialPageRoute(
                       builder: (context) => ActiveCallScreen(
                         call: updatedCall,
@@ -82,14 +92,21 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
                 });
               }
 
-              // If call was rejected, show message and pop
-              if (updatedCall.status == CallStatus.rejected) {
+              final isEndedBeforeConnect =
+                  updatedCall.status == CallStatus.rejected ||
+                  updatedCall.status == CallStatus.ended ||
+                  updatedCall.status == CallStatus.missed;
+
+              if (isEndedBeforeConnect && !_hasHandledTerminalState) {
+                _hasHandledTerminalState = true;
+                final navigator = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
                 Future.microtask(() {
                   if (mounted) {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Call rejected'),
+                    navigator.pop();
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(_terminalStatusMessage(updatedCall)),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -193,5 +210,13 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
         ),
       ),
     );
+  }
+
+  String _terminalStatusMessage(CallModel call) {
+    return switch (call.status) {
+      CallStatus.ended => 'Call ended',
+      CallStatus.missed => 'Call missed',
+      _ => 'Call rejected',
+    };
   }
 }
