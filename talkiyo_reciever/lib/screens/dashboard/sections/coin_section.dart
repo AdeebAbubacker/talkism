@@ -222,7 +222,7 @@ class _EarningInsightSheet extends StatelessWidget {
             const SizedBox(height: 18),
             const _InsightRow(
               icon: Icons.call_received_rounded,
-              label: 'Demo calls answered',
+              label: 'calls answered',
               value: '4',
             ),
             const _InsightRow(

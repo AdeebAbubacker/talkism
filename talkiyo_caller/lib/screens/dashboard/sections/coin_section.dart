@@ -236,7 +236,7 @@ class _DummyPaymentSheetState extends State<_DummyPaymentSheet> {
                         ),
                       ),
                       Text(
-                        'Demo checkout - ${widget.price}',
+                        'Checkout - ${widget.price}',
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 13,

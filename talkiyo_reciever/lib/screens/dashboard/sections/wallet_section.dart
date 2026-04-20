@@ -33,7 +33,7 @@ class _WalletScreenState extends State<WalletScreen> {
         0,
         const _WalletTransaction(
           title: 'Payment Received',
-          subtitle: 'Demo call payout credited',
+          subtitle: 'call payout credited',
           amount: 42,
           icon: Icons.payments_rounded,
         ),
@@ -43,7 +43,7 @@ class _WalletScreenState extends State<WalletScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Demo payment received: +42.00'),
+        content: Text('payment received: +42.00'),
         backgroundColor: Color(0xFF19A463),
       ),
     );
@@ -202,7 +202,7 @@ class _BalanceSection extends StatelessWidget {
             children: [
               Expanded(
                 child: _PillActionButton(
-                  label: 'Receive Demo',
+                  label: 'Receive Paymeny',
                   icon: Icons.call_received_rounded,
                   color: const Color(0xFF19A463),
                   onTap: onReceiveDemoPayment,
@@ -330,7 +330,7 @@ class _WithdrawSheetState extends State<_WithdrawSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Demo payout request',
+              'Payout request',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w600,
@@ -381,7 +381,7 @@ class _WithdrawSheetState extends State<_WithdrawSheet> {
                       )
                     : const Icon(Icons.send_rounded),
                 label: Text(
-                  _isProcessing ? 'Sending...' : 'Request Demo Payout',
+                  _isProcessing ? 'Sending...' : 'Request Payout',
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6E1BDB),
@@ -445,7 +445,7 @@ class _PaymentReceivingDialogState extends State<_PaymentReceivingDialog> {
       ),
       content: Text(
         _complete
-            ? 'A demo call earning was credited to your wallet.'
+            ? 'A call earning was credited to your wallet.'
             : 'Matching completed call and wallet credit...',
         textAlign: TextAlign.center,
       ),

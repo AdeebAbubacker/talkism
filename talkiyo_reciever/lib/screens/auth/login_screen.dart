@@ -155,22 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: _validatePassword,
                 ),
                 const SizedBox(height: 12),
-
-                // Forgot password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // Navigate to forgot password screen
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Forgot password feature coming soon'),
-                        ),
-                      );
-                    },
-                    child: const Text('Forgot Password?'),
-                  ),
-                ),
                 const SizedBox(height: 24),
 
                 // Login button
