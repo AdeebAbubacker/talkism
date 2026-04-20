@@ -33,7 +33,7 @@ class NotificationService {
   static final StreamController<String> _callTapController =
       StreamController<String>.broadcast();
 
-  static const String _incomingCallsChannelId = 'talkiyo_incoming_calls_v2';
+  static const String _incomingCallsChannelId = 'talkiyo_incoming_calls_v3';
   static const int _notificationFlagInsistent = 4;
 
   static final AndroidNotificationChannel _incomingCallsChannel =
@@ -43,6 +43,7 @@ class NotificationService {
         description: 'Incoming Talkiyo call notifications',
         importance: Importance.max,
         playSound: true,
+        sound: RawResourceAndroidNotificationSound('iphone'),
         enableVibration: true,
         vibrationPattern: Int64List.fromList(<int>[
           0,
@@ -181,6 +182,7 @@ class NotificationService {
       autoCancel: false,
       enableVibration: true,
       playSound: true,
+      sound: const RawResourceAndroidNotificationSound('iphone'),
       channelAction: AndroidNotificationChannelAction.createIfNotExists,
       vibrationPattern: Int64List.fromList(<int>[0, 700, 350, 700, 350, 1200]),
       additionalFlags: Int32List.fromList(<int>[_notificationFlagInsistent]),
@@ -192,6 +194,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'iphone.mp3',
     );
 
     await _localNotifications.show(

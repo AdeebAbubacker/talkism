@@ -12,6 +12,18 @@ class CoinSection extends StatelessWidget {
     {'name': 'Payout', 'value': 'Ready', 'assets': 'assets/coin6.png'},
   ];
 
+  void _openInsightSheet(
+    BuildContext context, {
+    required String title,
+    required String value,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EarningInsightSheet(title: title, value: value),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
@@ -31,9 +43,11 @@ class CoinSection extends StatelessWidget {
           name: coin['name']!,
           value: coin['value']!,
           asset: coin['assets']!,
-          onTap: () {
-            debugPrint('Clicked ${coin['name']}');
-          },
+          onTap: () => _openInsightSheet(
+            context,
+            title: coin['name']!,
+            value: coin['value']!,
+          ),
         );
       },
     );
@@ -139,6 +153,135 @@ class _CoinTileState extends State<_CoinTile> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _EarningInsightSheet extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _EarningInsightSheet({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7F8ED),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.trending_up_rounded,
+                    color: Color(0xFF19A463),
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          color: Color(0xFF7E3DFF),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const _InsightRow(
+              icon: Icons.call_received_rounded,
+              label: 'Demo calls answered',
+              value: '4',
+            ),
+            const _InsightRow(
+              icon: Icons.timer_rounded,
+              label: 'Avg. talk time',
+              value: '02:10',
+            ),
+            const _InsightRow(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'Next payout',
+              value: 'Today',
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.check_rounded),
+                label: const Text('Got it'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InsightRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF7E3DFF), size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+        ],
       ),
     );
   }

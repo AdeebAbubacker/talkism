@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/ringtone_service.dart';
 import 'active_call_screen.dart';
 
 /// Outgoing call screen for ringing state
@@ -29,6 +32,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(RingtoneService.startRinging());
     _callStatusStream = widget.firestoreService.streamCallStatus(
       widget.call.callId,
     );
@@ -40,6 +44,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
 
     _isCancelling = true;
     try {
+      await RingtoneService.stopRinging();
       await widget.firestoreService.updateCallStatus(
         widget.call.callId,
         CallStatus.rejected,
@@ -55,6 +60,12 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
+  }
+
+  @override
+  void dispose() {
+    unawaited(RingtoneService.stopRinging());
+    super.dispose();
   }
 
   @override

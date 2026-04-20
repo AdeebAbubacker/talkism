@@ -5,6 +5,7 @@ import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/ringtone_service.dart';
 import 'active_call_screen.dart';
 
 /// Incoming call screen for receiving calls
@@ -31,6 +32,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(RingtoneService.startRinging());
     _listenForRemoteCancellation();
   }
 
@@ -49,6 +51,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
 
             if (shouldDismiss) {
               _isProcessing = true;
+              unawaited(RingtoneService.stopRinging());
               unawaited(
                 NotificationService.cancelCallNotification(widget.call.callId),
               );
@@ -86,6 +89,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
         return;
       }
 
+      await RingtoneService.stopRinging();
+
       // Update call status
       await widget.firestoreService.updateCallStatus(
         widget.call.callId,
@@ -122,6 +127,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
     setState(() => _isProcessing = true);
 
     try {
+      await RingtoneService.stopRinging();
       await widget.firestoreService.updateCallStatus(
         widget.call.callId,
         CallStatus.rejected,
@@ -290,6 +296,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   @override
   void dispose() {
     _callStatusSub?.cancel();
+    unawaited(RingtoneService.stopRinging());
     super.dispose();
   }
 }
