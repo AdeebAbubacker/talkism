@@ -33,6 +33,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   void initState() {
     super.initState();
     unawaited(RingtoneService.startRinging());
+    unawaited(NotificationService.cancelCallNotification(widget.call.callId));
     _listenForRemoteCancellation();
   }
 
