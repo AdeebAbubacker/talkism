@@ -4,14 +4,12 @@ class CoinSection extends StatelessWidget {
   CoinSection({super.key});
 
   final List<Map<String, String>> coins = [
-    {'name': '100 Coins', 'value': '₹50', 'assets': 'assets/coin1.png'},
-    {'name': '200 Coins', 'value': '₹100', 'assets': 'assets/coin2.png'},
-    {'name': '300 Coins', 'value': '₹150', 'assets': 'assets/coin3.png'},
-    {'name': '400 Coins', 'value': '₹200', 'assets': 'assets/coin4.png'},
-    {'name': '500 Coins', 'value': '₹250', 'assets': 'assets/coin5.png'},
-    {'name': '600 Coins', 'value': '₹300', 'assets': 'assets/coin6.png'},
-    {'name': '700 Coins', 'value': '₹350', 'assets': 'assets/coin7.png'},
-    {'name': '800 Coins', 'value': '₹400', 'assets': 'assets/coin8.png'},
+    {'name': 'Today', 'value': '₹0', 'assets': 'assets/coin1.png'},
+    {'name': 'This Week', 'value': '₹0', 'assets': 'assets/coin2.png'},
+    {'name': 'This Month', 'value': '₹0', 'assets': 'assets/coin3.png'},
+    {'name': 'Answered', 'value': '0 calls', 'assets': 'assets/coin4.png'},
+    {'name': 'Rate', 'value': '2/sec', 'assets': 'assets/coin5.png'},
+    {'name': 'Payout', 'value': 'Ready', 'assets': 'assets/coin6.png'},
   ];
 
   @override
@@ -104,7 +102,7 @@ class _CoinTileState extends State<_CoinTile> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(_pressed ? 0.05 : 0.10),
+                color: Colors.black.withValues(alpha: _pressed ? 0.05 : 0.10),
                 blurRadius: _pressed ? 4 : 8,
                 offset: Offset(0, _pressed ? 2 : 4),
               ),
@@ -115,6 +113,29 @@ class _CoinTileState extends State<_CoinTile> {
             children: [
               Expanded(child: Image.asset(widget.asset, fit: BoxFit.contain)),
               const SizedBox(height: 6),
+              Text(
+                widget.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                widget.value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF7E3DFF),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),

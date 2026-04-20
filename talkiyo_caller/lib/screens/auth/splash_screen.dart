@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/notification_service.dart';
 import 'login_screen.dart';
-
 
 /// Splash screen that checks authentication state
 class SplashScreen extends StatefulWidget {
@@ -20,7 +20,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   /// Navigate to appropriate screen based on auth state
   Future<void> _navigateToNextScreen() async {
-    await Future.delayed(const Duration(seconds: 2));
+    if (!NotificationService.hasPendingCall) {
+      await Future.delayed(const Duration(seconds: 2));
+    }
 
     if (!mounted) return;
 

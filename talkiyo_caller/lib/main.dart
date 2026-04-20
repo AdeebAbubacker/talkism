@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:talkiyo_caller/screens/auth/splash_screen.dart';
 import 'package:talkiyo_caller/screens/dashboard/dashboard_screen.dart';
 import 'package:talkiyo_caller/services/notification_service.dart';
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: false,
-        // textTheme: GoogleFonts.montserratTextTheme(),
+        textTheme: GoogleFonts.montserratTextTheme(),
         primarySwatch: Colors.blue,
       ),
       home: const SplashScreen(),

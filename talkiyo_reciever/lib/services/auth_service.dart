@@ -36,7 +36,7 @@ class AuthService {
         uid: userCredential.user!.uid,
         name: name,
         email: email,
-        role: 'caller',
+        role: 'receiver',
         isOnline: true,
         updatedAt: DateTime.now(),
         createdAt: DateTime.now(),
@@ -75,7 +75,7 @@ class AuthService {
             'email': userCredential.user!.email,
           if (userCredential.user!.displayName != null)
             'name': userCredential.user!.displayName,
-          'role': 'caller',
+          'role': 'receiver',
           'isOnline': true,
           'updatedAt': DateTime.now(),
         }, SetOptions(merge: true)),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../firebase_options.dart';
+import '../models/call_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -31,13 +33,26 @@ class NotificationService {
   static final StreamController<String> _callTapController =
       StreamController<String>.broadcast();
 
-  static const AndroidNotificationChannel _incomingCallsChannel =
+  static const String _incomingCallsChannelId = 'talkiyo_incoming_calls_v2';
+  static const int _notificationFlagInsistent = 4;
+
+  static final AndroidNotificationChannel _incomingCallsChannel =
       AndroidNotificationChannel(
-        'talkiyo_incoming_calls',
+        _incomingCallsChannelId,
         'Incoming calls',
         description: 'Incoming Talkiyo call notifications',
         importance: Importance.max,
         playSound: true,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList(<int>[
+          0,
+          700,
+          350,
+          700,
+          350,
+          1200,
+        ]),
+        audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
       );
 
   static bool _localNotificationsReady = false;
@@ -45,6 +60,7 @@ class NotificationService {
   static StreamSubscription<String>? _tokenRefreshSub;
 
   static Stream<String> get callTapStream => _callTapController.stream;
+  static bool get hasPendingCall => _pendingCallId != null;
 
   static Future<void> initialize() async {
     await FirebaseMessaging.instance.requestPermission(
@@ -59,9 +75,12 @@ class NotificationService {
           sound: true,
         );
 
-    await _ensureLocalNotificationsInitialized();
+    await _ensureLocalNotificationsInitialized(requestPermissions: true);
 
-    FirebaseMessaging.onMessage.listen(showIncomingCallNotification);
+    FirebaseMessaging.onMessage.listen((message) async {
+      await showIncomingCallNotification(message);
+      _emitCallTapFromMessage(message);
+    });
     FirebaseMessaging.onMessageOpenedApp.listen(_emitCallTapFromMessage);
 
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
@@ -104,8 +123,6 @@ class NotificationService {
     final callId = _callIdFromData(message.data);
     if (callId == null) return;
 
-    await _ensureLocalNotificationsInitialized();
-
     final callerName =
         _stringFromData(message.data, 'callerName') ??
         _stringFromData(message.data, 'caller_name') ??
@@ -122,10 +139,37 @@ class NotificationService {
         message.notification?.body ??
         _stringFromData(message.data, 'notificationBody') ??
         '$callerName is calling you';
-    final payload = jsonEncode({'callId': callId});
 
-    const androidDetails = AndroidNotificationDetails(
-      'talkiyo_incoming_calls',
+    await _showIncomingCallNotification(
+      callId: callId,
+      title: title,
+      body: body,
+    );
+  }
+
+  static Future<void> showIncomingCallNotificationForCall(CallModel call) {
+    final callerName = call.callerName.trim().isEmpty
+        ? 'Someone'
+        : call.callerName.trim();
+    final title =
+        'Incoming ${call.callType == CallType.video ? 'video' : 'audio'} call';
+    return _showIncomingCallNotification(
+      callId: call.callId,
+      title: title,
+      body: '$callerName is calling you',
+    );
+  }
+
+  static Future<void> _showIncomingCallNotification({
+    required String callId,
+    required String title,
+    required String body,
+  }) async {
+    await _ensureLocalNotificationsInitialized(requestPermissions: false);
+
+    final payload = jsonEncode({'callId': callId});
+    final androidDetails = AndroidNotificationDetails(
+      _incomingCallsChannelId,
       'Incoming calls',
       channelDescription: 'Incoming Talkiyo call notifications',
       importance: Importance.max,
@@ -133,8 +177,14 @@ class NotificationService {
       category: AndroidNotificationCategory.call,
       visibility: NotificationVisibility.public,
       fullScreenIntent: true,
+      ongoing: true,
+      autoCancel: false,
       enableVibration: true,
       playSound: true,
+      channelAction: AndroidNotificationChannelAction.createIfNotExists,
+      vibrationPattern: Int64List.fromList(<int>[0, 700, 350, 700, 350, 1200]),
+      additionalFlags: Int32List.fromList(<int>[_notificationFlagInsistent]),
+      audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
       ticker: 'Incoming Talkiyo call',
     );
 
@@ -148,16 +198,23 @@ class NotificationService {
       _notificationIdForCall(callId),
       title,
       body,
-      const NotificationDetails(android: androidDetails, iOS: darwinDetails),
+      NotificationDetails(android: androidDetails, iOS: darwinDetails),
       payload: payload,
     );
   }
 
-  static Future<void> cancelCallNotification(String callId) {
-    return _localNotifications.cancel(_notificationIdForCall(callId));
+  static Future<void> cancelCallNotification(String callId) async {
+    try {
+      await _localNotifications.cancel(_notificationIdForCall(callId));
+    } catch (error, stackTrace) {
+      debugPrint('Failed to cancel call notification for $callId: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
-  static Future<void> _ensureLocalNotificationsInitialized() async {
+  static Future<void> _ensureLocalNotificationsInitialized({
+    required bool requestPermissions,
+  }) async {
     if (_localNotificationsReady) return;
 
     const initializationSettings = InitializationSettings(
@@ -172,11 +229,19 @@ class NotificationService {
       },
     );
 
-    await _localNotifications
+    final androidImplementation = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_incomingCallsChannel);
+        >();
+
+    await androidImplementation?.createNotificationChannel(
+      _incomingCallsChannel,
+    );
+
+    if (requestPermissions) {
+      await androidImplementation?.requestNotificationsPermission();
+      await androidImplementation?.requestFullScreenIntentPermission();
+    }
 
     _localNotificationsReady = true;
   }

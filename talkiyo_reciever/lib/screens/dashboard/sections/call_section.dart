@@ -46,7 +46,7 @@ class CallSection extends StatelessWidget {
           return const _CallEmptyState(
             icon: Icons.call_outlined,
             title: 'No calls yet',
-            message: 'Users you have connected with will show here.',
+            message: 'Answered calls and caller history will show here.',
           );
         }
 
@@ -54,7 +54,7 @@ class CallSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 130),
           children: [
             const Text(
-              'Previously Connected',
+              'Caller History',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -63,7 +63,7 @@ class CallSection extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Recent users and call time',
+              'Recent callers, status, and connected time',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 15,
@@ -113,7 +113,7 @@ class _CallSummary extends StatelessWidget {
         Expanded(
           child: _SummaryBox(
             icon: Icons.people_outline,
-            label: 'Users',
+            label: 'Callers',
             value: connectedUsers.toString(),
           ),
         ),
@@ -121,7 +121,7 @@ class _CallSummary extends StatelessWidget {
         Expanded(
           child: _SummaryBox(
             icon: Icons.call_outlined,
-            label: 'Calls',
+            label: 'Answered',
             value: connectedCalls.toString(),
           ),
         ),
@@ -298,27 +298,24 @@ class _CallHistoryTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Column(
-            children: [
-              _RoundActionButton(
-                icon: Icons.call_rounded,
-                color: const Color(0xFF22B61E),
-                tooltip: 'Audio call',
-                onTap: onStartCall == null
-                    ? null
-                    : () => onStartCall!(call, false),
-              ),
-              const SizedBox(height: 8),
-              _RoundActionButton(
-                icon: Icons.videocam_rounded,
-                color: const Color(0xFF3478F6),
-                tooltip: 'Video call',
-                onTap: onStartCall == null
-                    ? null
-                    : () => onStartCall!(call, true),
-              ),
-            ],
-          ),
+          if (onStartCall != null)
+            Column(
+              children: [
+                _RoundActionButton(
+                  icon: Icons.call_rounded,
+                  color: const Color(0xFF22B61E),
+                  tooltip: 'Audio call',
+                  onTap: () => onStartCall!(call, false),
+                ),
+                const SizedBox(height: 8),
+                _RoundActionButton(
+                  icon: Icons.videocam_rounded,
+                  color: const Color(0xFF3478F6),
+                  tooltip: 'Video call',
+                  onTap: () => onStartCall!(call, true),
+                ),
+              ],
+            ),
         ],
       ),
     );

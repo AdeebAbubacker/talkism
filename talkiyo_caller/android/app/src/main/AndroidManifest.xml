@@ -30,7 +30,7 @@
             android:resource="@mipmap/ic_launcher" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="talkiyo_incoming_calls" />
+            android:value="talkiyo_incoming_calls_v2" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

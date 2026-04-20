@@ -45,7 +45,7 @@ class _BalanceSection extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          'Coin Balance',
+          'Earnings Balance',
           style: TextStyle(
             color: Colors.black,
             fontSize: 22,
@@ -81,14 +81,14 @@ class _BalanceSection extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.24),
+                color: Colors.black.withValues(alpha: 0.24),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
             ],
           ),
           child: const Text(
-            'Recharge Wallet',
+            'Withdraw Earnings',
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -114,7 +114,7 @@ class _TransactionTile extends StatelessWidget {
             height: 74,
             width: 74,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.55),
+              color: Colors.white.withValues(alpha: 0.55),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -129,7 +129,7 @@ class _TransactionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bonus',
+                  'Call Earning',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -138,7 +138,7 @@ class _TransactionTile extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'April 16 2026, 9:55 AM',
+                  'Recent answered call',
                   style: TextStyle(
                     color: Color(0xFF808080),
                     fontSize: 13,

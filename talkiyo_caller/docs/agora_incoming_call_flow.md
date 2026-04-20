@@ -212,7 +212,7 @@ Official Firebase doc:
     "android": {
       "priority": "high",
       "notification": {
-        "channel_id": "talkiyo_incoming_calls",
+        "channel_id": "talkiyo_incoming_calls_v2",
         "sound": "default",
         "priority": "PRIORITY_HIGH"
       }

@@ -79,6 +79,9 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
         .streamIncomingCall(_currentUserId)
         .listen((call) {
           if (call != null && mounted && !_isShowingIncomingCall) {
+            unawaited(
+              NotificationService.showIncomingCallNotificationForCall(call),
+            );
             _isShowingIncomingCall = true;
             Navigator.of(context)
                 .push(
@@ -106,7 +109,6 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
         return;
       }
 
-      await NotificationService.cancelCallNotification(call.callId);
       if (!mounted) return;
 
       _isShowingIncomingCall = true;
@@ -661,9 +663,9 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
     return Positioned(
       left: 16,
       right: 16,
-      bottom: 20,
+      bottom: 45,
       child: Container(
-        height: 84,
+        height: 70,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,

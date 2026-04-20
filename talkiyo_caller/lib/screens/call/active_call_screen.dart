@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import '../../models/call_model.dart';
@@ -26,18 +28,45 @@ class ActiveCallScreen extends StatefulWidget {
 }
 
 class _ActiveCallScreenState extends State<ActiveCallScreen> {
-  late RtcEngine _engine;
+  RtcEngine? _engine;
+  StreamSubscription<CallModel?>? _callStatusSub;
   int? _remoteUserId;
   bool _isMicrophoneMuted = false;
   bool _isCameraOff = false;
   bool _isSpeakerEnabled = true;
+  bool _isEndingCall = false;
+  bool _isEngineReady = false;
+  bool _hasReleasedEngine = false;
   int _callDurationSeconds = 0;
 
   @override
   void initState() {
     super.initState();
+    _listenForCallEnd();
     _joinChannel();
     _startCallTimer();
+  }
+
+  void _listenForCallEnd() {
+    _callStatusSub = widget.firestoreService
+        .streamCallStatus(widget.call.callId)
+        .listen(
+          (updatedCall) {
+            if (updatedCall == null || _isEndingCall) return;
+
+            final isTerminal =
+                updatedCall.status == CallStatus.ended ||
+                updatedCall.status == CallStatus.rejected ||
+                updatedCall.status == CallStatus.missed;
+
+            if (isTerminal) {
+              _finishCall(updateFirestoreStatus: false);
+            }
+          },
+          onError: (error) {
+            debugPrint('Error listening for call status: $error');
+          },
+        );
   }
 
   /// Join Agora channel
@@ -46,25 +75,28 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       // Release the shared AgoraService engine so it doesn't compete for the
       // microphone while this screen manages its own dedicated engine.
       await widget.agoraService.dispose();
+      if (!mounted || _isEndingCall) return;
 
-      _engine = createAgoraRtcEngine();
-      await _engine.initialize(
+      final engine = createAgoraRtcEngine();
+      _engine = engine;
+      await engine.initialize(
         RtcEngineContext(
           appId: config.appId,
           channelProfile: ChannelProfileType.channelProfileCommunication,
         ),
       );
+      if (mounted) setState(() => _isEngineReady = true);
 
       // Set event handlers
-      _engine.registerEventHandler(
+      engine.registerEventHandler(
         RtcEngineEventHandler(
           onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
             debugPrint('Joined channel successfully');
-            _engine.setEnableSpeakerphone(_isSpeakerEnabled);
+            engine.setEnableSpeakerphone(_isSpeakerEnabled);
           },
           onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
             debugPrint('Remote user joined: $remoteUid');
-            setState(() => _remoteUserId = remoteUid);
+            if (mounted) setState(() => _remoteUserId = remoteUid);
           },
           onUserOffline:
               (
@@ -73,8 +105,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                 UserOfflineReasonType reason,
               ) {
                 debugPrint('Remote user offline: $remoteUid');
-                setState(() => _remoteUserId = null);
-                _endCall();
+                if (mounted) setState(() => _remoteUserId = null);
+                _finishCall(updateFirestoreStatus: true);
               },
           onError: (ErrorCodeType errorCode, String errorMsg) {
             debugPrint('Agora error: $errorCode - $errorMsg');
@@ -83,27 +115,27 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       );
 
       // Set channel profile
-      await _engine.setChannelProfile(
+      await engine.setChannelProfile(
         ChannelProfileType.channelProfileCommunication,
       );
 
       // Set user role
-      await _engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+      await engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
 
       // Enable/disable video based on call type
       if (widget.call.callType == CallType.video) {
-        await _engine.enableVideo();
-        await _engine.startPreview();
+        await engine.enableVideo();
+        await engine.startPreview();
       } else {
-        await _engine.disableVideo();
+        await engine.disableVideo();
       }
 
       // Enable audio
-      await _engine.enableAudio();
+      await engine.enableAudio();
 
       // Join channel
       final isAudioOnly = widget.call.callType == CallType.audio;
-      await _engine.joinChannel(
+      await engine.joinChannel(
         token: widget.call.token,
         channelId: widget.call.channelId,
         uid: 0,
@@ -118,6 +150,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       );
     } catch (e) {
       debugPrint('Error joining channel: $e');
+      _isEngineReady = false;
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -146,8 +179,10 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   /// Toggle microphone
   Future<void> _toggleMicrophone() async {
     try {
+      final engine = _engine;
+      if (engine == null || !_isEngineReady) return;
       setState(() => _isMicrophoneMuted = !_isMicrophoneMuted);
-      await _engine.enableLocalAudio(!_isMicrophoneMuted);
+      await engine.enableLocalAudio(!_isMicrophoneMuted);
     } catch (e) {
       debugPrint('Error toggling microphone: $e');
     }
@@ -156,11 +191,13 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   /// Toggle camera
   Future<void> _toggleCamera() async {
     try {
+      final engine = _engine;
+      if (engine == null || !_isEngineReady) return;
       if (widget.call.callType == CallType.video) {
         setState(() => _isCameraOff = !_isCameraOff);
-        await _engine.enableLocalVideo(!_isCameraOff);
+        await engine.enableLocalVideo(!_isCameraOff);
         if (!_isCameraOff) {
-          await _engine.startPreview();
+          await engine.startPreview();
         }
       }
     } catch (e) {
@@ -171,8 +208,10 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   /// Switch camera
   Future<void> _switchCamera() async {
     try {
+      final engine = _engine;
+      if (engine == null || !_isEngineReady) return;
       if (widget.call.callType == CallType.video && !_isCameraOff) {
-        await _engine.switchCamera();
+        await engine.switchCamera();
       }
     } catch (e) {
       debugPrint('Error switching camera: $e');
@@ -182,8 +221,10 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   /// Toggle speaker
   Future<void> _toggleSpeaker() async {
     try {
+      final engine = _engine;
+      if (engine == null || !_isEngineReady) return;
       setState(() => _isSpeakerEnabled = !_isSpeakerEnabled);
-      await _engine.setEnableSpeakerphone(_isSpeakerEnabled);
+      await engine.setEnableSpeakerphone(_isSpeakerEnabled);
     } catch (e) {
       debugPrint('Error toggling speaker: $e');
     }
@@ -191,23 +232,54 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   /// End call
   Future<void> _endCall() async {
+    await _finishCall(updateFirestoreStatus: true);
+  }
+
+  Future<void> _finishCall({required bool updateFirestoreStatus}) async {
+    if (_isEndingCall) return;
+
+    _isEndingCall = true;
+    if (mounted) setState(() {});
+
     try {
-      // Update call status in Firestore
-      await widget.firestoreService.updateCallStatus(
-        widget.call.callId,
-        CallStatus.ended,
-      );
-      await NotificationService.cancelCallNotification(widget.call.callId);
-
-      // Leave channel
-      await _engine.leaveChannel();
-      await _engine.release();
-
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (updateFirestoreStatus) {
+        try {
+          await widget.firestoreService.updateCallStatus(
+            widget.call.callId,
+            CallStatus.ended,
+          );
+        } catch (e) {
+          debugPrint('Error updating call status while ending call: $e');
+        }
       }
+
+      await NotificationService.cancelCallNotification(widget.call.callId);
+      await _leaveAndReleaseEngine();
     } catch (e) {
       debugPrint('Error ending call: $e');
+    }
+
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _leaveAndReleaseEngine() async {
+    final engine = _engine;
+    if (engine == null || _hasReleasedEngine) return;
+
+    _hasReleasedEngine = true;
+    _isEngineReady = false;
+    _engine = null;
+
+    try {
+      await engine.leaveChannel();
+    } catch (e) {
+      debugPrint('Error leaving Agora channel: $e');
+    }
+
+    try {
+      await engine.release();
+    } catch (e) {
+      debugPrint('Error releasing Agora engine: $e');
     }
   }
 
@@ -231,13 +303,18 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   /// Build video call UI
   Widget _buildVideoCallUI() {
+    final engine = _engine;
+    if (!_isEngineReady || engine == null) {
+      return _buildConnectingUI(isVideo: true);
+    }
+
     return Stack(
       children: [
         // Remote video (full screen)
         if (_remoteUserId != null)
           AgoraVideoView(
             controller: VideoViewController.remote(
-              rtcEngine: _engine,
+              rtcEngine: engine,
               canvas: VideoCanvas(uid: _remoteUserId!),
               connection: RtcConnection(channelId: widget.call.channelId),
             ),
@@ -273,7 +350,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
             ),
             child: AgoraVideoView(
               controller: VideoViewController(
-                rtcEngine: _engine,
+                rtcEngine: engine,
                 canvas: const VideoCanvas(uid: 0),
               ),
             ),
@@ -461,6 +538,33 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     );
   }
 
+  Widget _buildConnectingUI({required bool isVideo}) {
+    return Container(
+      color: Colors.black,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isVideo ? Icons.videocam : Icons.call,
+            size: 56,
+            color: Colors.white30,
+          ),
+          const SizedBox(height: 18),
+          const CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Connecting call...',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Build control button widget
   Widget _buildControlButton({
     required IconData icon,
@@ -473,14 +577,15 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       backgroundColor: Colors.white.withValues(alpha: 0.2),
       child: IconButton(
         icon: Icon(icon, color: color, size: size),
-        onPressed: onPressed,
+        onPressed: _isEndingCall || !_isEngineReady ? null : onPressed,
       ),
     );
   }
 
   @override
   void dispose() {
-    _engine.leaveChannel().then((_) => _engine.release());
+    _callStatusSub?.cancel();
+    unawaited(_leaveAndReleaseEngine());
     super.dispose();
   }
 }

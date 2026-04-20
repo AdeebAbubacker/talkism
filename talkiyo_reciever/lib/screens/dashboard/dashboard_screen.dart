@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:talkiyo_reciever/screens/dashboard/sections/call_section.dart';
 import 'package:talkiyo_reciever/screens/dashboard/sections/coin_section.dart';
@@ -12,9 +11,6 @@ import '../../services/agora_service.dart';
 import '../../services/notification_service.dart';
 import '../../models/user_model.dart';
 import '../../models/call_model.dart';
-import '../../utils/agora_token_generator.dart';
-import '../../components/config_override.dart';
-import '../call/outgoing_call_screen.dart';
 import '../call/incoming_call_screen.dart';
 
 class UsedddddrsScreen extends StatefulWidget {
@@ -39,8 +35,8 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
 
   final List<String> pageTitles = const [
     "Home",
-    "My Calls",
-    "Add Coin",
+    "Calls",
+    "Earnings",
     "Wallet",
     "Profile",
   ];
@@ -78,6 +74,9 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
         .streamIncomingCall(_currentUserId)
         .listen((call) {
           if (call != null && mounted && !_isShowingIncomingCall) {
+            unawaited(
+              NotificationService.showIncomingCallNotificationForCall(call),
+            );
             _isShowingIncomingCall = true;
             Navigator.of(context)
                 .push(
@@ -105,7 +104,6 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
         return;
       }
 
-      await NotificationService.cancelCallNotification(call.callId);
       if (!mounted) return;
 
       _isShowingIncomingCall = true;
@@ -148,85 +146,6 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error initializing Agora: $e')));
     }
-  }
-
-  Future<void> _startCall(UserModel targetUser, bool isVideoCall) async {
-    try {
-      final hasPermission = await _agoraService.requestPermissions(
-        requireCamera: isVideoCall,
-      );
-
-      if (!hasPermission) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Permission denied. Please enable microphone and camera.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      final callId = DateTime.now().millisecondsSinceEpoch.toString();
-
-      final token = AgoraTokenGenerator.generateRtcToken(
-        appId: agoraAppId,
-        appCertificate: agoraPrimaryCertificate,
-        channelName: callId,
-      );
-
-      final call = CallModel(
-        callId: callId,
-        callerId: _currentUserId,
-        callerName: _currentUserData?.name ?? 'Unknown',
-        callerEmail: _currentUserData?.email ?? 'unknown@email.com',
-        receiverId: targetUser.uid,
-        receiverName: targetUser.name,
-        receiverEmail: targetUser.email,
-        channelId: callId,
-        token: token,
-        callType: isVideoCall ? CallType.video : CallType.audio,
-        status: CallStatus.ringing,
-        createdAt: DateTime.now(),
-      );
-
-      await _firestoreService.createCall(call);
-
-      if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OutgoingCallScreen(
-            call: call,
-            agoraService: _agoraService,
-            firestoreService: _firestoreService,
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error starting call: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _startCallFromHistory(CallModel call, bool isVideoCall) async {
-    final isOutgoing = call.callerId == _currentUserId;
-    final now = DateTime.now();
-    final targetUser = UserModel(
-      uid: isOutgoing ? call.receiverId : call.callerId,
-      name: isOutgoing ? call.receiverName : call.callerName,
-      email: isOutgoing ? call.receiverEmail : call.callerEmail,
-      isOnline: false,
-      updatedAt: now,
-      createdAt: now,
-    );
-
-    await _startCall(targetUser, isVideoCall);
   }
 
   void onTabTapped(int index) {
@@ -336,234 +255,54 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
     );
   }
 
-  Widget _buildHomeUsers() {
-    return StreamBuilder<List<UserModel>>(
-      stream: _firestoreService.streamAllUsersExceptCurrent(_currentUserId),
+  Widget _buildReceiverHome() {
+    final displayName = _currentUserData?.name.trim();
+
+    return StreamBuilder<CallModel?>(
+      stream: _currentUserId.isEmpty
+          ? const Stream<CallModel?>.empty()
+          : _firestoreService.streamIncomingCall(_currentUserId),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Text(
-              'No users available',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-            ),
-          );
-        }
-
-        final users = snapshot.data!;
+        final incomingCall = snapshot.data;
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 130),
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  "Listeners",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Icon(Icons.tune, color: Colors.grey, size: 24),
-                    SizedBox(width: 8),
-                    Text(
-                      "മലയാളം",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            Text(
+              displayName == null || displayName.isEmpty
+                  ? 'Ready to receive calls'
+                  : 'Hi, $displayName',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Stay online, answer calls, and track your earnings.',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 18),
-            ...users.map((user) => _listenerCard(user)),
+            _AvailabilityCard(isOnline: _currentUserData?.isOnline ?? true),
+            const SizedBox(height: 16),
+            if (incomingCall == null)
+              const _NoIncomingCallCard()
+            else
+              _IncomingCallCard(
+                call: incomingCall,
+                onPickUp: () =>
+                    _openIncomingCallFromNotification(incomingCall.callId),
+              ),
+            const SizedBox(height: 16),
+            const _ReceiverEarningInfoCard(),
           ],
         );
       },
-    );
-  }
-
-  Widget _listenerCard(UserModel user) {
-    // final imageUrl = (user.imageUrl != null && user.imageUrl!.trim().isNotEmpty)
-    //     ? user.imageUrl!.trim()
-    //     : null;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Stack(
-            children: [
-              Container(
-                width: 92,
-                height: 110,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: const Color(0xFFD8B4F8),
-                  image:
-                      (user.profilePic != null && user.profilePic!.isNotEmpty)
-                      ? DecorationImage(
-                          image: MemoryImage(base64Decode(user.profilePic!)),
-                          fit: BoxFit.cover, // fills the container
-                        )
-                      : null,
-                ),
-                child: (user.profilePic == null || user.profilePic!.isEmpty)
-                    ? const Center(
-                        child: Icon(Icons.person, color: Colors.grey, size: 36),
-                      )
-                    : null,
-              ),
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: user.isOnline ? Colors.green : Colors.grey,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: SizedBox(
-              height: 110,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.name.isNotEmpty ? user.name : 'Unknown User',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text(
-                        'User',
-                        style: TextStyle(fontSize: 17, color: Colors.black),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(width: 1, height: 18, color: Colors.grey[300]),
-                      const SizedBox(width: 12),
-                      const Icon(
-                        Icons.monetization_on,
-                        color: Colors.amber,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        user.isOnline ? '2/Sec' : 'Offline',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: user.isOnline
-                              ? const Color(0xFFDA9E16)
-                              : Colors.grey,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.email_outlined,
-                        color: Colors.grey,
-                        size: 22,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          user.email,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            children: [
-              InkWell(
-                onTap: () => _startCall(user, false),
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF22B61E),
-                    borderRadius: BorderRadius.circular(45),
-                  ),
-                  child: const Icon(Icons.call, color: Colors.white, size: 32),
-                ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: () => _startCall(user, true),
-                borderRadius: BorderRadius.circular(22),
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3478F6),
-                    borderRadius: BorderRadius.circular(45),
-                  ),
-                  child: const Icon(
-                    Icons.videocam,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -599,12 +338,11 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
 
   Widget _buildBody() {
     if (selectedIndex == 0) {
-      return _buildHomeUsers();
+      return _buildReceiverHome();
     } else if (selectedIndex == 1) {
       return CallSection(
         currentUserId: _currentUserId,
         firestoreService: _firestoreService,
-        onStartCall: _startCallFromHistory,
       );
     } else if (selectedIndex == 2) {
       return CoinSection();
@@ -679,7 +417,7 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _navItem(index: 0, icon: Icons.home_outlined, label: 'Home'),
-            _navItem(index: 1, icon: Icons.call_outlined, label: 'My Calls'),
+            _navItem(index: 1, icon: Icons.call_outlined, label: 'Calls'),
             GestureDetector(
               onTap: () => onTabTapped(2),
               child: AnimatedContainer(
@@ -746,5 +484,327 @@ class _UsedddddrsScreenState extends State<UsedddddrsScreen> {
     _notificationTapSub?.cancel();
     _agoraService.dispose();
     super.dispose();
+  }
+}
+
+class _AvailabilityCard extends StatelessWidget {
+  final bool isOnline;
+
+  const _AvailabilityCard({required this.isOnline});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: isOnline
+                  ? const Color(0xFFE7F8ED)
+                  : const Color(0xFFF1F1F1),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(
+              isOnline ? Icons.wifi_tethering_rounded : Icons.cloud_off,
+              color: isOnline ? const Color(0xFF19A463) : Colors.grey,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isOnline ? 'Available for Calls' : 'Offline',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  isOnline
+                      ? 'Incoming calls will appear here instantly.'
+                      : 'Sign in again to appear online for callers.',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoIncomingCallCard extends StatelessWidget {
+  const _NoIncomingCallCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1EAFF),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.call_received_rounded,
+                  color: Color(0xFF7E3DFF),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text(
+                  'No incoming calls right now',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'When a user calls you, the incoming screen and notification will show with accept and reject controls.',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IncomingCallCard extends StatelessWidget {
+  final CallModel call;
+  final VoidCallback onPickUp;
+
+  const _IncomingCallCard({required this.call, required this.onPickUp});
+
+  @override
+  Widget build(BuildContext context) {
+    final callIcon = call.callType == CallType.video
+        ? Icons.videocam_rounded
+        : Icons.call_rounded;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFF22B61E), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE7F8ED),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(callIcon, color: const Color(0xFF19A463), size: 32),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Incoming Call',
+                  style: TextStyle(
+                    color: Color(0xFF19A463),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  call.callerName.trim().isEmpty
+                      ? 'Unknown User'
+                      : call.callerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  call.callType == CallType.video ? 'Video call' : 'Audio call',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          InkWell(
+            onTap: onPickUp,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(
+                color: Color(0xFF22B61E),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.call, color: Colors.white, size: 28),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReceiverEarningInfoCard extends StatelessWidget {
+  const _ReceiverEarningInfoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(
+          child: _ReceiverMetricCard(
+            icon: Icons.monetization_on,
+            label: 'Rate',
+            value: '2/sec',
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: _ReceiverMetricCard(
+            icon: Icons.account_balance_wallet_outlined,
+            label: 'Wallet',
+            value: 'Earnings',
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: _ReceiverMetricCard(
+            icon: Icons.verified_user_outlined,
+            label: 'Role',
+            value: 'Receiver',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReceiverMetricCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ReceiverMetricCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 96,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFF7E3DFF), size: 24),
+          const Spacer(),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

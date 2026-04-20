@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
 import '../../services/firestore_service.dart';
-import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import '../../config/agora.config.dart' as config;
-import 'incoming_call_screen.dart';
 import 'active_call_screen.dart';
 
 /// Outgoing call screen for ringing state
@@ -26,13 +23,13 @@ class OutgoingCallScreen extends StatefulWidget {
 
 class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
   late Stream<CallModel?> _callStatusStream;
-  bool _isCallRinging = true;
 
   @override
   void initState() {
     super.initState();
-    _callStatusStream =
-        widget.firestoreService.streamCallStatus(widget.call.callId);
+    _callStatusStream = widget.firestoreService.streamCallStatus(
+      widget.call.callId,
+    );
   }
 
   /// Cancel the outgoing call
@@ -47,9 +44,9 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }

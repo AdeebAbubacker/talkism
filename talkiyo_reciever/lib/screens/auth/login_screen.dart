@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to your account',
+                  'Sign in to receive calls and track earnings',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don't have an account? ",
+                      "Ready to earn? ",
                       style: TextStyle(color: Colors.grey),
                     ),
                     TextButton(
@@ -222,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: const Text(
-                        'Sign Up',
+                        'Create Receiver Account',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
