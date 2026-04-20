@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
 import '../../services/firestore_service.dart';
-import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import '../../config/agora.config.dart' as config;
-import 'incoming_call_screen.dart';
 import 'active_call_screen.dart';
 
 /// Outgoing call screen for ringing state
@@ -14,11 +11,11 @@ class OutgoingCallScreen extends StatefulWidget {
   final FirestoreService firestoreService;
 
   const OutgoingCallScreen({
-    Key? key,
+    super.key,
     required this.call,
     required this.agoraService,
     required this.firestoreService,
-  }) : super(key: key);
+  });
 
   @override
   State<OutgoingCallScreen> createState() => _OutgoingCallScreenState();
@@ -26,7 +23,6 @@ class OutgoingCallScreen extends StatefulWidget {
 
 class _OutgoingCallScreenState extends State<OutgoingCallScreen> {
   late Stream<CallModel?> _callStatusStream;
-  bool _isCallRinging = true;
 
   @override
   void initState() {

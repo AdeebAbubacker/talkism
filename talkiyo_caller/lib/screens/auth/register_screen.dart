@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:talkiyo_caller/screens/dashboard/dashboard_screen.dart';
 import '../../services/auth_service.dart';
 import 'login_screen.dart';
-import '../home/users_screen.dart';
 
 /// Register screen for new user signup
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -90,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const UsersScreen()),
+            MaterialPageRoute(builder: (context) => const UsedddddrsScreen()),
           );
         }
       } catch (e) {

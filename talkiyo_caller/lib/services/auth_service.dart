@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 /// Service for handling Firebase Authentication
@@ -24,27 +28,27 @@ class AuthService {
   }) async {
     try {
       // Create user account
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       // Create user document in Firestore
       final user = UserModel(
         uid: userCredential.user!.uid,
         name: name,
         email: email,
-        role: 'user',
+        role: 'caller',
         isOnline: true,
         updatedAt: DateTime.now(),
         createdAt: DateTime.now(),
       );
 
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set(user.toJson());
+      await _runBestEffortFirestoreWrite(
+        () => _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set(user.toJson(), SetOptions(merge: true)),
+        context: 'create user profile',
+      );
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -64,13 +68,19 @@ class AuthService {
       );
 
       // Update user status to online
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .update({
-        'isOnline': true,
-        'updatedAt': DateTime.now(),
-      });
+      await _runBestEffortFirestoreWrite(
+        () => _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'uid': userCredential.user!.uid,
+          if (userCredential.user!.email != null)
+            'email': userCredential.user!.email,
+          if (userCredential.user!.displayName != null)
+            'name': userCredential.user!.displayName,
+          'role': 'caller',
+          'isOnline': true,
+          'updatedAt': DateTime.now(),
+        }, SetOptions(merge: true)),
+        context: 'mark user online',
+      );
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -83,10 +93,13 @@ class AuthService {
     try {
       // Update user status to offline
       if (currentUserId != null) {
-        await _firestore.collection('users').doc(currentUserId).update({
-          'isOnline': false,
-          'updatedAt': DateTime.now(),
-        });
+        await _runBestEffortFirestoreWrite(
+          () => _firestore.collection('users').doc(currentUserId).set({
+            'isOnline': false,
+            'updatedAt': DateTime.now(),
+          }, SetOptions(merge: true)),
+          context: 'mark user offline',
+        );
       }
       await _auth.signOut();
     } catch (e) {
@@ -96,6 +109,8 @@ class AuthService {
 
   /// Get user profile from Firestore
   Future<UserModel?> getUserProfile(String uid) async {
+    if (uid.isEmpty) return null;
+
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
@@ -122,12 +137,72 @@ class AuthService {
     required bool isOnline,
   }) async {
     try {
-      await _firestore.collection('users').doc(uid).update({
+      await _firestore.collection('users').doc(uid).set({
         'isOnline': isOnline,
         'lastSeen': DateTime.now(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       throw 'Failed to update user status: $e';
+    }
+  }
+
+  /// Update profile picture URL in users collection
+  Future<void> updateProfilePictureBase64(File imageFile) async {
+    try {
+      final uid = currentUserId;
+
+      if (uid == null) {
+        throw 'User not logged in';
+      }
+
+      // Read image bytes
+      final bytes = await imageFile.readAsBytes();
+
+      // Convert to base64
+      final base64Image = base64Encode(bytes);
+
+      // Validate size (Firestore document limit ~1MB)
+      final sizeKB = bytes.lengthInBytes / 1024;
+
+      if (sizeKB > 300) {
+        throw 'Image too large. Please choose an image under 300KB.';
+      }
+
+      await _firestore.collection('users').doc(uid).set({
+        'profilePic': base64Image,
+        'updatedAt': DateTime.now(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw 'Failed to update profile picture: $e';
+    }
+  }
+
+  /// Optional: remove profile picture
+  Future<void> removeProfilePicture() async {
+    try {
+      final uid = currentUserId;
+
+      if (uid == null) {
+        throw 'User not logged in';
+      }
+
+      await _firestore.collection('users').doc(uid).set({
+        'profilePic': null,
+        'updatedAt': DateTime.now(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw 'Failed to remove profile picture: $e';
+    }
+  }
+
+  Future<void> _runBestEffortFirestoreWrite(
+    Future<void> Function() write, {
+    required String context,
+  }) async {
+    try {
+      await write();
+    } catch (e) {
+      debugPrint('Auth succeeded, but failed to $context: $e');
     }
   }
 

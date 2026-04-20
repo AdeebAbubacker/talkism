@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/notification_service.dart';
 import 'active_call_screen.dart';
 
 /// Incoming call screen for receiving calls
@@ -11,11 +12,11 @@ class IncomingCallScreen extends StatefulWidget {
   final FirestoreService firestoreService;
 
   const IncomingCallScreen({
-    Key? key,
+    super.key,
     required this.call,
     required this.agoraService,
     required this.firestoreService,
-  }) : super(key: key);
+  });
 
   @override
   State<IncomingCallScreen> createState() => _IncomingCallScreenState();
@@ -40,7 +41,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                  'Permission denied. Please enable microphone and camera.'),
+                'Permission denied. Please enable microphone and camera.',
+              ),
             ),
           );
           setState(() => _isProcessing = false);
@@ -53,6 +55,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
         widget.call.callId,
         CallStatus.accepted,
       );
+      await NotificationService.cancelCallNotification(widget.call.callId);
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -69,10 +72,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
         setState(() => _isProcessing = false);
       }
@@ -90,15 +90,16 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
         widget.call.callId,
         CallStatus.rejected,
       );
+      await NotificationService.cancelCallNotification(widget.call.callId);
 
       if (mounted) {
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() => _isProcessing = false);
       }
     }
@@ -126,10 +127,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                       const SizedBox(height: 24),
                       const Text(
                         'Incoming Call',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                       const SizedBox(height: 16),
                       CircleAvatar(
@@ -228,7 +226,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                    Colors.white,
+                                  ),
                                   strokeWidth: 2,
                                 ),
                               )

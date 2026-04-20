@@ -29,14 +29,14 @@ class ExampleConfigOverride {
   /// Get the expected APP ID
   String getAppId() {
     return _overridedConfig[keyAppId] ??
-        // Allow pass an `appId` as an environment variable with name `TEST_APP_ID` by using --dart-define
+       
         const String.fromEnvironment(keyAppId, defaultValue: agoraAppId);
   }
 
   /// Get the expected Channel ID
   String getChannelId() {
     return _overridedConfig[keyChannelId] ??
-        // Allow pass a `channelId` as an environment variable with name `TEST_CHANNEL_ID` by using --dart-define
+   
         const String.fromEnvironment(keyChannelId,
             defaultValue: 'talksim'); // your channel
   }

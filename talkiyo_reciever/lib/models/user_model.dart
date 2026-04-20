@@ -10,6 +10,7 @@ class UserModel {
   final bool isOnline;
   final DateTime updatedAt;
   final DateTime createdAt;
+  final String? profilePic;
 
   UserModel({
     required this.uid,
@@ -21,6 +22,7 @@ class UserModel {
     required this.isOnline,
     required this.updatedAt,
     required this.createdAt,
+    this.profilePic,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json, String uid) {
@@ -34,6 +36,7 @@ class UserModel {
       isOnline: json['isOnline'] ?? false,
       updatedAt: (json['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      profilePic: json['profilePic'],
     );
   }
 
@@ -48,6 +51,7 @@ class UserModel {
       'isOnline': isOnline,
       'updatedAt': updatedAt,
       'createdAt': createdAt,
+      'profilePic': profilePic,
     };
   }
 
@@ -61,6 +65,7 @@ class UserModel {
     bool? isOnline,
     DateTime? updatedAt,
     DateTime? createdAt,
+    String? profilePic,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -72,6 +77,7 @@ class UserModel {
       isOnline: isOnline ?? this.isOnline,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
+      profilePic: profilePic ?? this.profilePic,
     );
   }
 }

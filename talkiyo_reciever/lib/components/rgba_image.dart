@@ -6,12 +6,12 @@ import 'package:flutter/widgets.dart';
 
 class RgbaImage extends StatefulWidget {
   const RgbaImage({
-    Key? key,
+    super.key,
     required this.bytes,
     required this.width,
     required this.height,
     this.format = ui.PixelFormat.rgba8888,
-  }) : super(key: key);
+  });
 
   final Uint8List bytes;
   final int width;

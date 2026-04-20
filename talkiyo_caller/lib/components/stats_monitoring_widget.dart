@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 /// A widget that overlay the local/remote stats info above the child widget.
 class StatsMonitoringWidget extends StatelessWidget {
   const StatsMonitoringWidget({
-    Key? key,
+    super.key,
     required this.rtcEngine,
     required this.uid,
     this.channelId,
     required this.child,
-  }) : super(key: key);
+  });
 
   final RtcEngine rtcEngine;
 
@@ -40,11 +40,10 @@ class StatsMonitoringWidget extends StatelessWidget {
 
 class _StatsMonitoringInternalWidget extends StatefulWidget {
   const _StatsMonitoringInternalWidget({
-    Key? key,
     required this.rtcEngine,
     required this.uid,
     this.channelId,
-  }) : super(key: key);
+  });
 
   final RtcEngine rtcEngine;
 
@@ -151,7 +150,7 @@ class __StatsMonitoringInternalWidgetState
     final lastmileDelay = _rtcStats?.lastmileDelay ?? 0;
 
     final videoSentBitrate = _localVideoStats?.sentBitrate ?? 0;
-    final _audioSentBitrate = _localAudioStats?.sentBitrate ?? 0;
+    final audioSentBitrate = _localAudioStats?.sentBitrate ?? 0;
     final cpuTotalUsage = _rtcStats?.cpuTotalUsage ?? 0.0;
     final cpuAppUsage = _rtcStats?.cpuAppUsage ?? 0.0;
     final txPacketLossRate = _rtcStats?.txPacketLossRate ?? 0;
@@ -176,7 +175,7 @@ class __StatsMonitoringInternalWidgetState
         Text('Volume: $_volume', style: style),
         if (isLocal) ...[
           Text('VSend: ${videoSentBitrate}kbps', style: style),
-          Text('ASend: ${_audioSentBitrate}kbps', style: style),
+          Text('ASend: ${audioSentBitrate}kbps', style: style),
           Text('CPU: $cpuAppUsage% | $cpuTotalUsage%', style: style),
           Text('Send Loss: $txPacketLossRate%', style: style),
         ],

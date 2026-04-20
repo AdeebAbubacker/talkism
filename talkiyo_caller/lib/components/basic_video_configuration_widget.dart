@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class BasicVideoConfigurationWidget extends StatefulWidget {
   const BasicVideoConfigurationWidget({
-    Key? key,
+    super.key,
     required this.rtcEngine,
     required this.setConfigButtonText,
     required this.title,
@@ -12,7 +12,7 @@ class BasicVideoConfigurationWidget extends StatefulWidget {
     this.frameRate = 15,
     this.bitrate = 0,
     this.onConfigChanged,
-  }) : super(key: key);
+  });
 
   final RtcEngine rtcEngine;
 

@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'log_sink.dart';
 
 class DumpVideoAction extends StatefulWidget {
-  const DumpVideoAction({Key? key, required this.rtcEngine}) : super(key: key);
+  const DumpVideoAction({super.key, required this.rtcEngine});
 
   final RtcEngine rtcEngine;
 

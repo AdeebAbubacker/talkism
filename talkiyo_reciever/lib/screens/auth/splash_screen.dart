@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
-import '../home/users_screen.dart';
+
 
 /// Splash screen that checks authentication state
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -46,11 +46,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // App logo/icon
-            Icon(
-              Icons.video_call,
-              size: 100,
-              color: Colors.white,
-            ),
+            Icon(Icons.video_call, size: 100, color: Colors.white),
             const SizedBox(height: 24),
             // App name
             const Text(
@@ -65,10 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
             // Subtitle
             const Text(
               'Audio & Video Calling',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.white70),
             ),
             const SizedBox(height: 48),
             // Loading indicator

@@ -3,6 +3,7 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import '../../models/call_model.dart';
 import '../../services/agora_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/notification_service.dart';
 import '../../config/agora.config.dart' as config;
 
 /// Active call screen for ongoing calls
@@ -196,6 +197,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
         widget.call.callId,
         CallStatus.ended,
       );
+      await NotificationService.cancelCallNotification(widget.call.callId);
 
       // Leave channel
       await _engine.leaveChannel();

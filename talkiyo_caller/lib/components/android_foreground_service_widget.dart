@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AndroidForegroundServiceWidget extends StatefulWidget {
-  const AndroidForegroundServiceWidget({Key? key, required this.child})
-      : super(key: key);
+  const AndroidForegroundServiceWidget({super.key, required this.child});
 
   final Widget child;
 

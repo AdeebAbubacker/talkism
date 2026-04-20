@@ -9,11 +9,10 @@ mixin KeepRemoteVideoViewsMixin<T extends StatefulWidget> on State<T> {
 
 class RemoteVideoViewsWidget extends StatefulWidget {
   const RemoteVideoViewsWidget(
-      {Key? key,
+      {super.key,
       required this.rtcEngine,
       required this.channelId,
-      this.connectionUid})
-      : super(key: key);
+      this.connectionUid});
 
   final RtcEngine rtcEngine;
 

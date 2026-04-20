@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:talkiyo_reciever/screens/dashboard/dashboard_screen.dart';
 import '../../services/auth_service.dart';
 import 'register_screen.dart';
-import '../home/users_screen.dart';
 
 /// Login screen for user authentication
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -62,16 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const UsersScreen()),
+            MaterialPageRoute(builder: (context) => const UsedddddrsScreen()),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
           );
         }
       } finally {
@@ -96,11 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // Header
                 const SizedBox(height: 40),
-                Icon(
-                  Icons.video_call,
-                  size: 80,
-                  color: Colors.blue.shade900,
-                ),
+                Icon(Icons.video_call, size: 80, color: Colors.blue.shade900),
                 const SizedBox(height: 24),
                 const Text(
                   'Welcome Back',
@@ -115,10 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Sign in to your account',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 40),
 
@@ -198,8 +188,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                             strokeWidth: 2,
                           ),
                         )

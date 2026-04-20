@@ -6,10 +6,10 @@ typedef ExampleActionsBuilder = Widget Function(
 
 class ExampleActionsWidget extends StatelessWidget {
   const ExampleActionsWidget({
-    Key? key,
+    super.key,
     required this.displayContentBuilder,
     this.actionsBuilder,
-  }) : super(key: key);
+  });
 
   final ExampleActionsBuilder displayContentBuilder;
 

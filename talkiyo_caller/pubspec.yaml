@@ -1,6 +1,6 @@
 name: talkiyo_caller
 description: "Production-style Flutter caller app using Firebase, Firestore, FCM, Agora, and Provider."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -26,6 +26,10 @@ dependencies:
   crypto: ^3.0.7
   intl: ^0.20.2
   path_provider: ^2.1.5
+  google_fonts: ^8.0.2
+  image_picker: ^1.2.1
+  firebase_storage: ^13.3.0
+  firebase_app_check: ^0.4.3
 
 dev_dependencies:
   flutter_test:
@@ -42,3 +46,15 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/coin1.png
+    - assets/coin2.png
+    - assets/coin3.png
+    - assets/coin4.png
+    - assets/coin5.png
+    - assets/coin6.png
+    - assets/coin7.png
+    - assets/coin8.png
+    - assets/coin9.png
+    - assets/coinultra.png

@@ -1,4 +1,4 @@
-import 'package:talkiyo_reciever/components/config_override.dart';
+import '../components/config_override.dart';
 
 /// Get your own App ID at https://dashboard.agora.io/
 /// App ID: 60c258d1e7dc46fd83ed237c81969e1b

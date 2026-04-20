@@ -22,6 +22,8 @@ class CallModel {
   final DateTime createdAt;
   final DateTime? acceptedAt;
   final DateTime? endedAt;
+  final int? durationInSeconds;
+  final List<String> participantIds;
 
   CallModel({
     required this.callId,
@@ -38,25 +40,36 @@ class CallModel {
     required this.createdAt,
     this.acceptedAt,
     this.endedAt,
-  });
+    this.durationInSeconds,
+    List<String>? participantIds,
+  }) : participantIds = participantIds ?? [callerId, receiverId];
 
   /// Create CallModel from Firestore document
   factory CallModel.fromJson(Map<String, dynamic> json, String callId) {
+    final callerId = json['callerId'] ?? '';
+    final receiverId = json['receiverId'] ?? '';
+
     return CallModel(
       callId: callId,
-      callerId: json['callerId'] ?? '',
+      callerId: callerId,
       callerName: json['callerName'] ?? '',
       callerEmail: json['callerEmail'] ?? '',
-      receiverId: json['receiverId'] ?? '',
+      receiverId: receiverId,
       receiverName: json['receiverName'] ?? '',
       receiverEmail: json['receiverEmail'] ?? '',
       channelId: json['channelId'] ?? '',
       token: json['token'] ?? '',
       callType: json['callType'] == 'video' ? CallType.video : CallType.audio,
       status: _statusFromString(json['status'] ?? 'ringing'),
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      acceptedAt: (json['acceptedAt'] as Timestamp?)?.toDate(),
-      endedAt: (json['endedAt'] as Timestamp?)?.toDate(),
+      createdAt: _dateTimeFromJson(json['createdAt']) ?? DateTime.now(),
+      acceptedAt: _dateTimeFromJson(json['acceptedAt']),
+      endedAt: _dateTimeFromJson(json['endedAt']),
+      durationInSeconds: _intFromJson(json['durationInSeconds']),
+      participantIds: _participantIdsFromJson(
+        json['participantIds'],
+        callerId,
+        receiverId,
+      ),
     );
   }
 
@@ -76,6 +89,8 @@ class CallModel {
       'createdAt': createdAt,
       'acceptedAt': acceptedAt,
       'endedAt': endedAt,
+      if (durationInSeconds != null) 'durationInSeconds': durationInSeconds,
+      'participantIds': participantIds,
     };
   }
 
@@ -95,6 +110,8 @@ class CallModel {
     DateTime? createdAt,
     DateTime? acceptedAt,
     DateTime? endedAt,
+    int? durationInSeconds,
+    List<String>? participantIds,
   }) {
     return CallModel(
       callId: callId ?? this.callId,
@@ -111,13 +128,17 @@ class CallModel {
       createdAt: createdAt ?? this.createdAt,
       acceptedAt: acceptedAt ?? this.acceptedAt,
       endedAt: endedAt ?? this.endedAt,
+      durationInSeconds: durationInSeconds ?? this.durationInSeconds,
+      participantIds: participantIds ?? this.participantIds,
     );
   }
 
   /// Get call duration in seconds
   int? getDurationInSeconds() {
+    if (durationInSeconds != null) return durationInSeconds;
     if (acceptedAt == null || endedAt == null) return null;
-    return endedAt!.difference(acceptedAt!).inSeconds;
+    final seconds = endedAt!.difference(acceptedAt!).inSeconds;
+    return seconds < 0 ? 0 : seconds;
   }
 
   /// Helper to convert CallStatus enum to string
@@ -139,5 +160,30 @@ class CallModel {
       default:
         return CallStatus.ringing;
     }
+  }
+
+  static DateTime? _dateTimeFromJson(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
+  }
+
+  static int? _intFromJson(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return null;
+  }
+
+  static List<String> _participantIdsFromJson(
+    dynamic value,
+    String callerId,
+    String receiverId,
+  ) {
+    if (value is Iterable) {
+      final ids = value.whereType<String>().where((id) => id.isNotEmpty);
+      if (ids.isNotEmpty) return ids.toSet().toList();
+    }
+
+    return {callerId, receiverId}.where((id) => id.isNotEmpty).toList();
   }
 }

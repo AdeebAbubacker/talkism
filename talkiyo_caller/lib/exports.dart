@@ -6,12 +6,12 @@ export 'models/call_model.dart';
 export 'services/auth_service.dart';
 export 'services/firestore_service.dart';
 export 'services/agora_service.dart';
+export 'services/notification_service.dart';
 
 // Export all screens
 export 'screens/auth/splash_screen.dart';
 export 'screens/auth/login_screen.dart';
 export 'screens/auth/register_screen.dart';
-export 'screens/home/users_screen.dart';
 export 'screens/call/incoming_call_screen.dart';
 export 'screens/call/outgoing_call_screen.dart';
 export 'screens/call/active_call_screen.dart';

@@ -8,7 +8,6 @@ import '../services/agora_service.dart';
 class IncomingCallProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
   final AuthService _authService;
-  final AgoraService _agoraService;
 
   CallModel? _incomingCall;
   bool _isListening = false;
@@ -18,8 +17,7 @@ class IncomingCallProvider extends ChangeNotifier {
     required AuthService authService,
     required AgoraService agoraService,
   })  : _firestoreService = firestoreService,
-        _authService = authService,
-        _agoraService = agoraService;
+        _authService = authService;
 
   CallModel? get incomingCall => _incomingCall;
   bool get isListening => _isListening;

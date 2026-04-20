@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Talkiyo Caller needs microphone access to place Agora audio calls.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Talkiyo Caller needs camera access for video calls.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
