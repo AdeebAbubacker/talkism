@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../firebase_options.dart';
@@ -56,6 +58,8 @@ class NotificationService {
         audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
       );
 
+  static const MethodChannel _callKitChannel = MethodChannel('com.talkiyo/callkit');
+
   static bool _localNotificationsReady = false;
   static String? _pendingCallId;
   static StreamSubscription<String>? _tokenRefreshSub;
@@ -96,6 +100,47 @@ class NotificationService {
         response?.payload != null) {
       _emitCallTapFromPayload(response!.payload);
     }
+
+    // iOS: listen for CallKit accept/reject and VoIP token events from AppDelegate
+    if (Platform.isIOS) {
+      _callKitChannel.setMethodCallHandler(_handleCallKitEvent);
+      // Pick up any pending VoIP call stored in UserDefaults while app was killed
+      try {
+        final pendingId = await _callKitChannel.invokeMethod<String>('getPendingCallId');
+        if (pendingId != null && pendingId.isNotEmpty) {
+          _emitCallTap(pendingId);
+        }
+      } catch (_) {}
+    }
+  }
+
+  static Future<void> _handleCallKitEvent(MethodCall call) async {
+    switch (call.method) {
+      case 'voipToken':
+        final token = call.arguments as String?;
+        if (token != null && token.isNotEmpty) {
+          await _saveVoipToken(token);
+        }
+      case 'incomingCall':
+      case 'acceptCall':
+        final args = call.arguments as Map?;
+        final callId = args?['callId'] as String?;
+        if (callId != null && callId.isNotEmpty) {
+          _emitCallTap(callId);
+        }
+      case 'rejectCall':
+        // Firestore update is handled natively in AppDelegate; nothing to do in Dart
+        break;
+    }
+  }
+
+  static Future<void> _saveVoipToken(String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'voipToken': token,
+      'voipTokenUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   static Future<void> syncTokenForCurrentUser() async {

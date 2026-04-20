@@ -41,6 +41,19 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.talkiyo/ringtone",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "stopRingtone" -> {
+                    RingtoneService.stop(applicationContext)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     private fun isDefaultDialer(): Boolean {
